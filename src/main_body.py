@@ -32,41 +32,6 @@ def check_bomb(arr, data):
     return k
 
 
-"""
-def write_number(X, Y, data):
-    if X == 0:
-        if Y == 0:
-            k = check_bomb([[0, 1], [1, 0], [1, 1]], data)
-            data['board'][X][Y] = f'{k}'
-        elif Y == (data['y'] - 1):
-            k = check_bomb([[1, Y], [0, Y - 1], [1, Y - 1]], data)
-            data['board'][X][Y] = f'{k}'
-        else:
-            k = check_bomb([[0, Y + 1], [1, Y], [1, Y - 1], [1, Y + 1], [0, Y - 1]], data)
-            data['board'][X][Y] = f'{k}'
-    elif X == (data['x'] - 1):
-        if Y == 0:
-            k = check_bomb([[X, 1], [X, 0], [X, 1]], data)
-            data['board'][X][Y] = f'{k}'
-        elif Y == (data['y'] - 1):
-            k = check_bomb([[X - 1, Y], [X, Y - 1], [X - 1, Y - 1]], data)
-            data['board'][X][Y] = f'{k}'
-        else:
-            k = check_bomb([[X, Y + 1], [X - 1, Y], [X, Y - 1], [X - 1, Y + 1], [X - 1, Y - 1]], data)
-            data['board'][X][Y] = f'{k}'
-    else:
-        if Y == 0:
-            k = check_bomb([[X + 1, Y], [X - 1, Y], [X, Y + 1], [X + 1, Y + 1], [X - 1, Y + 1]], data)
-            data['board'][X][Y] = f'{k}'
-        elif Y == (data['y'] - 1):
-            k = check_bomb([[X + 1, Y], [X - 1, Y], [X, Y - 1], [X + 1, Y - 1], [X - 1, Y - 1]], data)
-            data['board'][X][Y] = f'{k}'
-        else:
-            k = check_bomb([[X + 1, Y], [X - 1, Y], [X, Y - 1], [X + 1, Y - 1], [X - 1, Y - 1],
-                            [X, Y + 1], [X + 1, Y + 1], [X - 1, Y + 1]], data)
-            data['board'][X][Y] = f'{k}'
-"""
-
 
 def gen_bombs(data):
     if len(data['bombs']) == data['number_of_bombs']:
@@ -82,7 +47,7 @@ def gen_bombs(data):
 
 def do_big_board(data):
     gen_bombs(data)
-    data['big_board'] = [[0 for i in range(data['x'] + 2)] for j in range(data['y'] + 2)]
+    data['big_board'] = [['0' for i in range(data['x'] + 2)] for j in range(data['y'] + 2)]
     for i in range(1, data['y'] + 1):
         for j in range(1, data['x'] + 1):
             if [j - 1, i - 1] in data['bombs']:
@@ -109,20 +74,25 @@ def turn(X, Y, action, data):
                 data['open_points'].append([X, Y])
                 return 1
     elif action.lower() == 'help':
-        X, Y = do_help_turn(data)
-        if [X, Y] in data['bombs']:
+        x, y = do_help_turn(data, data['turn'])
+        if [x, y] in data['bombs']:
             return 0
         else:
-            data['board'][Y][X] = data['big_board'][Y + 1][X + 1]
-            data['open_points'].append([X, Y])
-            return 1
+            if data['big_board'][y + 1][x + 1] == '0':
+                open_null(x, y, data)
+                data['open_points'].append([x, y])
+                return 1
+            else:
+                data['board'][y][x] = data['big_board'][y + 1][x + 1]
+                data['open_points'].append([x, y])
+                return 1
 
 
 def check_game(data):
     open_points = 0
     for i in range(data['y']):
         for j in range(data['x']):
-            if data['board'][i][j].isdecimal():
+            if data['board'][i][j] in {'1', '2', '3', '4', '5', '6', '7', '8', 1, 2, 3, 4, 5, 6, 7, 8, 0, '0'}:
                 open_points += 1
     if open_points + len(data['bombs']) == data['y'] * data['x']:
         return True
@@ -140,42 +110,6 @@ def open_null(X, Y, data):
                     'x'] and 0 <= point[1] < data['y']:
                     if data['board'][point[1]][point[0]] == '#' and point not in queue:
                         queue.append(point)
-
-
-"""
-class Game:
-    def __init__(self, mode, x=5, y=5, number_of_bombs=False):
-        self.x = x
-        self.y = y
-        self.number_of_bombs = number_of_bombs
-        if number_of_bombs is False:
-            self.number_of_bombs = random.randint(2, 5)
-        self.mode = mode
-        self.board = []
-        self.flags = []
-        self.bombs = []
-        self.open_fields = []
-        self.turn = 0
-
-    def mode(self):
-        pass
-
-    def make_board(self):
-        for i in range(self.y):
-            self.board.append([])
-            for j in range(self.x):
-                self.board[i].append('#')
-
-    def show_board(self):
-        for i in range(self.y):
-            print()
-            for j in range(self.x):
-                print(self.board[i][j], end=' ')
-
-    def turn(self, x, y, action):
-        pass
-
-"""
 
 
 def show_board(data):
@@ -220,20 +154,24 @@ if __name__ == "__main__":
         print('Play has started!')
         session_of_game = True
         while session_of_game:
-            ask = input().split()
-            X = int(ask[0])
-            Y = int(ask[1])
-            action = ask[2]
-            continue_ = turn(X, Y, action, game[1])
+            ask = input()
+            if ask == 'help':
+                continue_ = turn(0, 0, 'help', game[1])
+            else:
+                ask = ask.split()
+                X = int(ask[0])
+                Y = int(ask[1])
+                action = ask[2]
+                continue_ = turn(X, Y, action, game[1])
             if not continue_:
                 session_of_game = False
                 print('Я тебя переиграл и уничтожил')
+                show_board2(game[1])
             elif check_game(game[1]):
                 print('You Win!!!')
                 session_of_game = False
             else:
                 show_board(game[1])
                 print()
-                show_board2(game[1])
-                print()
                 save_game(game[0], game[1])
+            game[1]['turn'] += 1
